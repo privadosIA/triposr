@@ -1,0 +1,17 @@
+{
+ "torch": "2.10.0+cu128",
+ "numpy": "2.4.6",
+ "device": "cpu",
+ "triposr_commit": "107cefdc244c39106fa830359024f6a2f1c78871",
+ "radius": 0.87,
+ "threshold": 25.0,
+ "points_seed": 1234,
+ "details": {
+  "low": 128,
+  "normal": 192,
+  "high": 256
+ },
+ "max_triangles": 500000,
+ "skimage": "0.26.0",
+ "trimesh": "5.2.2"
+}

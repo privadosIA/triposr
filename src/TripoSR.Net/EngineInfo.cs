@@ -10,7 +10,7 @@ public static class EngineInfo
     public const string Name = "TripoSR";
 
     /// <summary>The version of this port: part of what decides a model (the orchestrator caches by it), so it changes when a model would.</summary>
-    public const string PortVersion = "0.0.1";
+    public const string PortVersion = "0.1.0";
 
     /// <summary>What a model made by this port says made it (<c>engine_version</c> of a job and of <c>GET /engines</c>).</summary>
     public static string Version => $"{Id}-net@{PortVersion}";

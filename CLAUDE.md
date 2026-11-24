@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current state
 
-**Scaffold.** `src/TripoSR.Net` has only `EngineInfo`; `src/TripoSR.Service` implements the whole HTTP contract of `docker/model3d/server.py` (jobs, queue, token, `/docs`) with `NotPortedEngine`, which fails every job with a sentence that says so; the tests (11) cover that in process. Nothing of the model is ported. The plan is the OpenSpec change `port-triposr` (`openspec/changes/port-triposr`: proposal, design, specs, tasks) and `docs/porting-plan.md`.
+**Ported.** The whole model is in `src/TripoSR.Net` (picture, DINO, triplane, backbone, field, marching cubes, finish, `.glb`) and `src/TripoSR.Service` makes models with it (`TripoSREngine`, loaded on the first job). Every stage is tested against the fixtures of the golden run (`tests/fixtures/`, made by `tools/golden_all.sh`); the tests that need the weights read `TRIPOSR_CKPT` and are skipped without it. What is left of the OpenSpec change `port-triposr` (`openspec/changes/port-triposr`) is task 7.3, which lives in mediaOrquestator (the `ServiceSpec` and the entry in `scripts/get-services.sh`), and the archive. See `docs/porting-plan.md`.
 
 ## Build and test
 
@@ -23,4 +23,4 @@ A C# (.NET 8 + TorchSharp) inference-only port of TripoSR (https://github.com/VA
 
 ## Workflow: OpenSpec (spec-driven)
 
-Changes are planned and tracked with OpenSpec (`openspec/config.yaml`, `schema: spec-driven`). `openspec/specs/` holds the current specs, `openspec/changes/` the ones in flight and `openspec/changes/archive/` the completed ones. Commit right after every archive. Slash commands (`/opsx:explore`, `/opsx:propose`, `/opsx:update`, `/opsx:apply`, `/opsx:sync`, `/opsx:archive`) and the skills live in `.claude/`. Normal flow: explore → propose → apply → archive. The first change, `port-triposr`, is already proposed: start with `/opsx:apply port-triposr`.
+Changes are planned and tracked with OpenSpec (`openspec/config.yaml`, `schema: spec-driven`). `openspec/specs/` holds the current specs, `openspec/changes/` the ones in flight and `openspec/changes/archive/` the completed ones. Commit right after every archive. Slash commands (`/opsx:explore`, `/opsx:propose`, `/opsx:update`, `/opsx:apply`, `/opsx:sync`, `/opsx:archive`) and the skills live in `.claude/`. Normal flow: explore → propose → apply → archive. The first change, `port-triposr`, is applied but for task 7.3.

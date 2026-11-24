@@ -57,7 +57,7 @@ paths:
           content:
             application/json:
               schema: { type: object, required: [id], properties: { id: { type: string } } }
-        "400": { description: "The request cannot be made: another engine, a detail that is none, or a body that is not a picture.", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "400": { description: "The request cannot be made: another engine, a detail that is none, a body that is not a picture, or weights that are not complete.", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "413": { description: The picture is larger than 20 MB., content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
   /jobs/{id}:

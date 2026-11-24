@@ -4,7 +4,7 @@
 
 It speaks plain HTTP and is meant for localhost or a trusted network. Put a reverse proxy in front of it if it must be reached from elsewhere, and set a token.
 
-> **State of the engine:** until the port is done (`openspec/changes/port-triposr`), `POST /generate` queues the job and the job fails with *"TripoSR is not ported yet in this build"*; everything else of the contract works.
+> The model is loaded when the first job asks for it and stays in memory (on the card with a cuda device); the first job pays for the load.
 
 ## Start it
 
@@ -26,7 +26,7 @@ scripts/run-service.sh --model ~/Proyectos/mediaOrquestator/models/model3d --por
 |---|---|
 | `GET /health` | `{ready, version, busy, queued, gpu, missing, engines}`: `ready` is false while a file of the weights is missing (named in `missing`) or the device does not work |
 | `GET /engines` | `{engines: {triposr: {built, missing, ready, version}}}` |
-| `POST /generate?engine=triposr&detail=low\|normal\|high` | the picture (png, jpg or webp, up to 20 MB) as the body -> `202 {id}`; `400` for another engine, a detail that is none or a body that is not a picture; `413` over 20 MB |
+| `POST /generate?engine=triposr&detail=low\|normal\|high` | the picture (png, jpg or webp, up to 20 MB) as the body -> `202 {id}`; `400` for another engine, a detail that is none, a body that is not a picture or weights that are not complete; `413` over 20 MB |
 | `GET /jobs/{id}` | `{id, state (queued, running, done, failed), progress, error, seconds, engine, engine_version, detail, detail_used, resolution, triangles}` |
 | `GET /jobs/{id}/model` | the `.glb` (`model/gltf-binary`); `409` until the job is done |
 | `DELETE /jobs/{id}` | forgets the job and its model |

@@ -24,7 +24,7 @@ context: |
     One model at a time, the others queued in arrival order. The orchestrator caches a model by its `engine_version`, which here is `triposr-net@<EngineInfo.PortVersion>`: change `PortVersion` whenever a model would change.
   - What every model leaves with, whatever the engine gave (the contract of the container): upright in glTF's axes (Y up), its origin at the middle of its base, surface and no more than 500,000 triangles
     (a model over it is made again at the next lower detail, and `detail_used` says so), its colours kept.
-  - Every change that touches the model ends in a parity test against fixtures in `tests/fixtures/` (fp32: max_abs <= 1e-4 and cos_sim >= 0.9999 per stage; for the mesh, the same triangles
+  - Every change that touches the model ends in a parity test against fixtures in `tests/fixtures/` (fp32: max_abs <= 1e-4 (times the largest magnitude of the stage when that is above 1: the backbone reaches thousands, and the reference differs from itself by 1e-3 between thread counts) and cos_sim >= 0.9999 per stage; for the mesh, the same triangles
     count within 1% and a Chamfer distance below 1e-3 of the reference's size). Without parity it is not archived.
   - Checkpoints NEVER in the repo; tests that need them are marked `[RequiresCheckpoint]` and read `TRIPOSR_CKPT`. Fixtures are checked against a sha256 table.
   - Tests: xUnit. Build: `dotnet build -p:TorchBackend=cpu`. Layout like `~/Proyectos/lion-clap`: `src/`, `tests/`, `tools/`.

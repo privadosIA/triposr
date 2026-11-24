@@ -8,11 +8,17 @@
     <RootNamespace>TripoSR</RootNamespace>
     <!-- Allows running on machines that only have a newer runtime (e.g. .NET 10). -->
     <RollForward>Major</RollForward>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Managed API; the native backend comes from Directory.Build.props -->
     <PackageReference Include="TorchSharp" Version="$(TorchSharpVersion)" />
+    <!-- The cut-out model (u2net.onnx) runs on ONNX Runtime, as rembg does in the reference. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.20.1" />
+    <!-- Decoding png, jpg and webp (libpng, libjpeg-turbo and libwebp, the libraries Pillow uses too); MIT. -->
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.9" />
   </ItemGroup>
 
   <ItemGroup>

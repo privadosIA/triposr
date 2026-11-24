@@ -3,3 +3,9 @@ Copyright 2026 Jesús Suero
 
 This product is a C# port of TripoSR (https://github.com/VAST-AI-Research/TripoSR), released under the MIT licence by Tripo AI and Stability AI. The weights
 (`stabilityai/TripoSR`) are also MIT. The port is inference only and uses the reference code as its specification.
+
+The marching cubes (`src/TripoSR.Net/Mesh/MarchingCubes.cs`, `LewinerTables.cs`) is a port of scikit-image's `skimage.measure._marching_cubes_lewiner_cy` and its look-up tables
+(scikit-image 0.26.0, BSD-3-Clause, Copyright 2009-2022 the scikit-image team), which in turn follow Thomas Lewiner et al., "Efficient implementation of Marching Cubes' cases
+with topological guarantees" (2003). It is what the reference mesh was made with.
+
+Third-party packages the library uses: TorchSharp (MIT), ONNX Runtime (MIT), SkiaSharp (MIT). The cut-out model `u2net.onnx` (Apache-2.0) is part of the weights folder, not of the repository.

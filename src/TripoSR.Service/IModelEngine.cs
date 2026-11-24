@@ -1,3 +1,5 @@
+using TripoSR.Mesh;
+
 namespace TripoSR.Service;
 
 /// <summary>A model the engine made: the binary glTF and what is said of it in the job.</summary>
@@ -7,7 +9,7 @@ namespace TripoSR.Service;
 /// <param name="Triangles">The triangles of the mesh.</param>
 internal sealed record GenerationResult(byte[] Glb, string DetailUsed, int Size, int Triangles);
 
-/// <summary>The engine of the service: one picture in, one model out. This is where the port of TripoSR goes in.</summary>
+/// <summary>The engine of the service: one picture in, one model out.</summary>
 internal interface IModelEngine : IDisposable
 {
     /// <summary>What a model made by this engine says made it.</summary>
@@ -20,19 +22,33 @@ internal interface IModelEngine : IDisposable
 /// <summary>The engine refuses the request (not an error of the service): the message is what the caller is told.</summary>
 internal sealed class RefusedException(string message) : Exception(message);
 
-/// <summary>The engine of this build: the port is not done yet, so every model fails with a sentence that says so. It lets the service answer the whole contract from the first day.</summary>
-internal sealed class NotPortedEngine : IModelEngine
+/// <summary>
+/// The engine of the service: the TripoSR port. The model is loaded when the first job asks for it and stays in memory (on the card, with a cuda device) until the service stops:
+/// there is one engine, so there is never another to free first.
+/// </summary>
+internal sealed class TripoSREngine(ServiceSettings settings) : IModelEngine
 {
+    private TripoSRPipeline? _pipeline;
+
     public string Version => EngineInfo.Version;
 
-    public GenerationResult Generate(byte[] picture, string detail, CancellationToken cancel) =>
-        throw new RefusedException("TripoSR is not ported yet in this build: see openspec/changes/port-triposr");
+    public GenerationResult Generate(byte[] picture, string detail, CancellationToken cancel)
+    {
+        try
+        {
+            _pipeline ??= TripoSRPipeline.Load(settings.CheckpointDirectory, settings.Device);
+            var made = _pipeline.Make(picture, detail, cancel);
+            return new GenerationResult(GlbWriter.Write(made.Mesh), made.DetailUsed, made.Size, made.Mesh.TriangleCount);
+        }
+        catch (ModelRefusedException e) { throw new RefusedException(e.Message); }
+        catch (FileNotFoundException e) { throw new RefusedException(e.Message); } // a file of the weights is not there
+    }
 
-    public void Dispose() { }
+    public void Dispose() => _pipeline?.Dispose();
 }
 
-/// <summary>Chooses the engine from the settings. Until the port exists there is only <see cref="NotPortedEngine"/>.</summary>
+/// <summary>Chooses the engine from the settings.</summary>
 internal static class EngineFactory
 {
-    public static IModelEngine Create(ServiceSettings settings) => new NotPortedEngine();
+    public static IModelEngine Create(ServiceSettings settings) => new TripoSREngine(settings);
 }

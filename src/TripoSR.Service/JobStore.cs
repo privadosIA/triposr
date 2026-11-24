@@ -37,7 +37,7 @@ internal sealed record JobView(
     [property: JsonPropertyName("detail_used")] string DetailUsed, [property: JsonPropertyName("resolution")] int Resolution, [property: JsonPropertyName("triangles")] int Triangles);
 
 /// <summary>The jobs of the service: the picture is checked when it comes, the model is made one at a time in arrival order, and a job is kept until it is forgotten.</summary>
-internal sealed class JobStore(IModelEngine engine, FifoGate gate)
+internal sealed class JobStore(IModelEngine engine, FifoGate gate, Func<IReadOnlyList<string>>? missingFiles = null)
 {
     private readonly Dictionary<string, Job> _jobs = new();
     private readonly object _lock = new();
@@ -49,6 +49,7 @@ internal sealed class JobStore(IModelEngine engine, FifoGate gate)
         if (!EngineInfo.DetailSizes.ContainsKey(detail)) throw new RefusedException($"detail must be {string.Join(", ", EngineInfo.DetailSizes.Keys)}, got '{detail}'");
         if (picture.Length == 0) throw new RefusedException("the body must be the picture (a png, jpg or webp)");
         if (!LooksLikePicture(picture)) throw new RefusedException("the picture must be a png, jpg or webp");
+        if (missingFiles?.Invoke() is { Count: > 0 } missing) throw new RefusedException($"the weights of {EngineInfo.Id} are not complete: {string.Join(", ", missing)}");
         var job = new Job(Guid.NewGuid().ToString("N")[..12], engineId, detail, picture);
         lock (_lock) _jobs[job.Id] = job;
         _ = gate.RunAsync(() => { Run(job); return 0; });

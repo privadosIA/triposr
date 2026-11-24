@@ -10,7 +10,7 @@ What exists: the Python container (`docker/model3d/server.py`, `fetch.py`, `trip
 
 **2. The port version decides the cache.** The orchestrator keys a model by its `engine_version`; this port says `triposr-net@<PortVersion>`, so a model of the container and a model of the port are never taken for each other, and `PortVersion` changes whenever a model would.
 
-**3. Parity first, speed later.** Each stage is ported in fp32 on the CPU first and checked against fixtures (`max_abs <= 1e-4`, `cos_sim >= 0.9999`); the CUDA path comes with an opt-in test, as in `lion-clap`. The mesh is checked by triangles count, bounding box and a Chamfer distance (marching cubes is exact on the same density; it is the density that carries the tolerance).
+**3. Parity first, speed later.** Each stage is ported in fp32 on the CPU first and checked against fixtures (`max_abs <= 1e-4`, `cos_sim >= 0.9999`; the limit on `max_abs` is relative to the stage's largest magnitude when that is above 1, because fp32 noise grows with it: the backbone output reaches 2,800 and the Python reference differs from itself by 1.3e-3 between one thread and twenty); the CUDA path comes with an opt-in test, as in `lion-clap`. The mesh is checked by triangles count, bounding box and a Chamfer distance (marching cubes is exact on the same density; it is the density that carries the tolerance).
 
 **4. Weights are the container's.** The files and their names are those of `models/model3d`; the C# modules replicate the keys of the checkpoint so the strict loader needs no mapping. The PyTorch pickle is read directly (the reader of `lion-clap`) and converted once to safetensors in the golden run.
 

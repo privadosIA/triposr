@@ -2,7 +2,7 @@
 
 ### Requirement: Every stage matches the reference
 
-Each stage of the model (see `docs/porting-plan.md`) SHALL be tested against fixtures of the golden run, in fp32, with `max_abs <= 1e-4` and `cos_sim >= 0.9999`, so that a difference is found at the stage where it starts; a change that touches the model SHALL NOT be archived without its parity test.
+Each stage of the model (see `docs/porting-plan.md`) SHALL be tested against fixtures of the golden run, in fp32, with `max_abs <= 1e-4 * max(1, max|expected|)` (an absolute 1e-4 where the values are of order 1, relative where they are large: the backbone output reaches 2,800 and the reference itself varies 1.3e-3 with the thread count) and `cos_sim >= 0.9999`, so that a difference is found at the stage where it starts; a change that touches the model SHALL NOT be archived without its parity test.
 
 #### Scenario: A stage
 - **WHEN** a stage runs on the fixtures' input

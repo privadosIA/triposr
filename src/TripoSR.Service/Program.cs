@@ -10,8 +10,9 @@ catch (SettingsException e)
 
 using var engine = EngineFactory.Create(settings);
 var gate = new FifoGate();
-var jobs = new JobStore(engine, gate);
-var api = new ServiceApp(settings, jobs, new HealthProbe(settings, gate, engine.Version), gate);
+var health = new HealthProbe(settings, gate, engine.Version);
+var jobs = new JobStore(engine, gate, health.MissingFiles);
+var api = new ServiceApp(settings, jobs, health, gate);
 var app = ServiceApp.Build(api, $"http://0.0.0.0:{settings.Port}");
 await app.StartAsync();
 Console.WriteLine($"triposr-service {settings.Version} listening on :{settings.Port} (weights: {settings.CheckpointDirectory})");

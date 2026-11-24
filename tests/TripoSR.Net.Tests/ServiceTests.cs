@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
+using TripoSR.Mesh;
 using TripoSR.Service;
 
 namespace TripoSR.Net.Tests;
 
-/// <summary>The service answers the whole contract of the Python container from the first day, with an engine that says it is not ported yet.</summary>
+/// <summary>The service answers the whole contract of the Python container, here with a stand-in engine (the real one is in <c>ServiceRealEngineTests</c>).</summary>
 public sealed class ServiceTests : IAsyncLifetime
 {
     private static readonly byte[] Png = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -20,7 +21,7 @@ public sealed class ServiceTests : IAsyncLifetime
 
     public async Task InitializeAsync() => await Start(token: "");
 
-    private async Task Start(string token, bool withWeights = true)
+    private async Task Start(string token, bool withWeights = true, IModelEngine? engine = null)
     {
         _weights = Path.Combine(Path.GetTempPath(), "triposr-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_weights);
@@ -31,9 +32,11 @@ public sealed class ServiceTests : IAsyncLifetime
                 File.WriteAllBytes(Path.Combine(_weights, f), []);
             }
         var settings = new ServiceSettings(_weights, token, 0, "test", "cpu");
-        var engine = EngineFactory.Create(settings);
+        engine ??= new FakeEngine((_, detail) => new GenerationResult(
+            GlbWriter.Write(new ColoredMesh([0, 0, 0, 1, 0, 0, 0, 1, 0], [0, 1, 2], new byte[12])), detail, EngineInfo.DetailSizes[detail], 1));
         var gate = new FifoGate();
-        var api = new ServiceApp(settings, new JobStore(engine, gate), new HealthProbe(settings, gate, engine.Version, TimeSpan.Zero), gate);
+        var probe = new HealthProbe(settings, gate, engine.Version, TimeSpan.Zero);
+        var api = new ServiceApp(settings, new JobStore(engine, gate, probe.MissingFiles), probe, gate);
         _app = ServiceApp.Build(api, "http://127.0.0.1:0");
         await _app.StartAsync();
         var address = _app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.First();
@@ -82,6 +85,18 @@ public sealed class ServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AJobIsRefusedWhenTheWeightsAreNotComplete()
+    {
+        await DisposeAsync();
+        await Start("", withWeights: false);
+        var r = await _http.PostAsync("/generate", new ByteArrayContent(Png));
+        Assert.Equal(HttpStatusCode.BadRequest, r.StatusCode);
+        var said = (await Json(r)).GetProperty("error").GetString();
+        Assert.Contains("the weights of triposr are not complete", said);
+        Assert.Contains("triposr/model.ckpt", said);
+    }
+
+    [Fact]
     public async Task WithATokenEveryCallNeedsIt()
     {
         await DisposeAsync();
@@ -91,24 +106,55 @@ public sealed class ServiceTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, (await _http.GetAsync("/health")).StatusCode);
     }
 
-    [Fact]
-    public async Task AJobOfAnEngineThatIsNotPortedFailsWithASentenceAndHasNoModel()
+    private async Task<JsonElement> WaitForJob(string id)
     {
-        var r = await _http.PostAsync("/generate?detail=low", new ByteArrayContent(Png));
-        Assert.Equal(HttpStatusCode.Accepted, r.StatusCode);
-        var id = (await Json(r)).GetProperty("id").GetString()!;
         JsonElement job = default;
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 200; i++)
         {
             job = await Json(await _http.GetAsync($"/jobs/{id}"));
             if (job.GetProperty("state").GetString() is "done" or "failed") break;
             await Task.Delay(20);
         }
-        Assert.Equal("failed", job.GetProperty("state").GetString());
-        Assert.Contains("not ported", job.GetProperty("error").GetString());
-        Assert.Equal(HttpStatusCode.Conflict, (await _http.GetAsync($"/jobs/{id}/model")).StatusCode);
+        return job;
+    }
+
+    [Fact]
+    public async Task APictureBecomesAJobThatEndsDoneWithItsModel()
+    {
+        var r = await _http.PostAsync("/generate?detail=low", new ByteArrayContent(Png));
+        Assert.Equal(HttpStatusCode.Accepted, r.StatusCode);
+        var id = (await Json(r)).GetProperty("id").GetString()!;
+        var job = await WaitForJob(id);
+        Assert.Equal("done", job.GetProperty("state").GetString());
+        Assert.Equal(("low", "low", 128, 1, EngineInfo.Version), (job.GetProperty("detail").GetString(), job.GetProperty("detail_used").GetString(), job.GetProperty("resolution").GetInt32(), job.GetProperty("triangles").GetInt32(), job.GetProperty("engine_version").GetString()));
+        var model = await _http.GetAsync($"/jobs/{id}/model");
+        Assert.Equal("model/gltf-binary", model.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("glTF", System.Text.Encoding.ASCII.GetString((await model.Content.ReadAsByteArrayAsync())[..4]));
         Assert.Equal(HttpStatusCode.OK, (await _http.DeleteAsync($"/jobs/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _http.GetAsync($"/jobs/{id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task AnEngineThatRefusesFailsTheJobWithASentenceAndLeavesNoModel()
+    {
+        await DisposeAsync();
+        await Start("", engine: new FakeEngine((_, _) => throw new RefusedException("the engine made no surface: the picture may not show an object on its own")));
+        var id = (await Json(await _http.PostAsync("/generate?detail=low", new ByteArrayContent(Png)))).GetProperty("id").GetString()!;
+        var job = await WaitForJob(id);
+        Assert.Equal("failed", job.GetProperty("state").GetString());
+        Assert.Contains("no surface", job.GetProperty("error").GetString());
+        Assert.Equal(HttpStatusCode.Conflict, (await _http.GetAsync($"/jobs/{id}/model")).StatusCode);
+    }
+
+    [Fact]
+    public async Task AnUnexpectedFailureIsASentenceToo()
+    {
+        await DisposeAsync();
+        await Start("", engine: new FakeEngine((_, _) => throw new OutOfMemoryException("CUDA out of memory")));
+        var id = (await Json(await _http.PostAsync("/generate", new ByteArrayContent(Png)))).GetProperty("id").GetString()!;
+        var job = await WaitForJob(id);
+        Assert.Equal("failed", job.GetProperty("state").GetString());
+        Assert.Equal("OutOfMemoryException: CUDA out of memory", job.GetProperty("error").GetString());
     }
 
     [Theory]
@@ -154,4 +200,12 @@ public sealed class ServiceTests : IAsyncLifetime
     [Fact]
     public void TheDetailsAreTheThreeOfTheContract() =>
         Assert.Equal(new[] { "high", "low", "normal" }, EngineInfo.DetailSizes.Keys.Order().ToArray());
+}
+
+/// <summary>An engine for the tests of the HTTP side: it makes whatever the function says.</summary>
+internal sealed class FakeEngine(Func<byte[], string, GenerationResult> make) : IModelEngine
+{
+    public string Version => EngineInfo.Version;
+    public GenerationResult Generate(byte[] picture, string detail, CancellationToken cancel) => make(picture, detail);
+    public void Dispose() { }
 }
