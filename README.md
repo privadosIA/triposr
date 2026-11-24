@@ -61,4 +61,12 @@ The weights are the ones of the container (`models/model3d` of mediaOrquestator:
 
 The orchestrator makes a model with one HTTP call per picture; what it needs from a service is the contract in [`docs/http-service.md`](docs/http-service.md) (`engine_version` of a model is part of what decides it: this port says `triposr-net@<version of the port>`). The server starts and stops the service like the other .NET ones (published to `bin/services/`), or the container, as the person chooses.
 
-The code of TripoSR and its weights are MIT; this port is Apache-2.0 (see `NOTICE`).
+## License
+
+Apache 2.0 (see [LICENSE](LICENSE)). This is a port of work by other people: the code of TripoSR and its weights are MIT (Tripo AI and Stability AI); see [NOTICE](NOTICE) for the origin and licences of the original, of the scikit-image marching cubes it follows and of the third-party packages and, for the whole set, the mediaOrquestator `dotnet/THIRD_PARTY.md`.
+
+This licence covers the code of this repository. The model weights (`stabilityai/TripoSR`) are not in it: they are their publisher's and are under their own licence: see the model card.
+
+## Maintenance
+
+Maintained by one person in their free time: issues and pull requests are welcome, with no promised response time. See [CONTRIBUTING.md](CONTRIBUTING.md) and, for vulnerabilities, [SECURITY.md](SECURITY.md).
