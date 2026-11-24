@@ -34,4 +34,4 @@
 
 - [x] 7.1 `TripoSREngine : IModelEngine` replaces `NotPortedEngine` in `EngineFactory`; the model loads on the first job and stays on the card; one engine on the card at a time; `PortVersion` is set.
 - [x] 7.2 End to end: the five pictures through the service, the same details as the Python one; triangles, bounding box and Chamfer distance against the reference meshes; times and memory on the 5060 Ti measured and written in the README.
-- [ ] 7.3 `bin/services/triposr` publish script (`dotnet publish`, cuda-linux) and the `ServiceSpec` in mediaOrquestator (task of that repository, listed in `docs/porting-plan.md`).
+- [x] 7.3 `bin/services/triposr` publish script (`dotnet publish`, cuda-linux) and the `ServiceSpec` in mediaOrquestator (task of that repository, listed in `docs/porting-plan.md`).

@@ -1,6 +1,6 @@
 # Porting plan
 
-The model, stage by stage, with what each stage is in the reference and where it goes here. Every stage ends in a parity test against fixtures of the golden run (see `openspec/config.yaml` for the thresholds). The tasks, in order, are in `openspec/changes/port-triposr/tasks.md`.
+The model, stage by stage, with what each stage is in the reference and where it goes here. Every stage ends in a parity test against fixtures of the golden run (see `openspec/config.yaml` for the thresholds). The tasks, in order, are in `openspec/changes/archive/2026-11-24-port-triposr/tasks.md`.
 
 | stage | in the reference (`tsr/`) | here |
 |---|---|---|

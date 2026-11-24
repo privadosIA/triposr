@@ -1,6 +1,6 @@
 # TripoSR.Net
 
-> Part of [mediaOrquestator](https://orquestator.xuxo.net/), where it makes the 3D models of the *models3d* category. **Status: ported.** Every stage of the model matches the Python reference and the five test pictures come out of the service as the container's models (see [Checked against the reference](#checked-against-the-reference)). What is left is on the mediaOrquestator side (the `ServiceSpec` and the publish entry; see [`docs/porting-plan.md`](docs/porting-plan.md)). The change is in [`openspec/changes/port-triposr`](openspec/changes/port-triposr).
+> Part of [mediaOrquestator](https://orquestator.xuxo.net/), where it makes the 3D models of the *models3d* category. **Status: ported.** Every stage of the model matches the Python reference and the five test pictures come out of the service as the container's models (see [Checked against the reference](#checked-against-the-reference)). What is left is on the mediaOrquestator side (the `ServiceSpec` and the publish entry; see [`docs/porting-plan.md`](docs/porting-plan.md)). The change is in [`openspec/changes/archive/2026-11-24-port-triposr`](openspec/changes/archive/2026-11-24-port-triposr).
 
 C# port (.NET 8 + [TorchSharp](https://github.com/dotnet/TorchSharp)) of [TripoSR](https://github.com/VAST-AI-Research/TripoSR), inference only: one picture in, one binary glTF (`.glb`) out. It replaces, as the product's engine, the Python container `docker/model3d` of mediaOrquestator (which stays as an optional fallback), the same way HeartMuLa, DiffRhythm2 and LAION-CLAP were migrated.
 
