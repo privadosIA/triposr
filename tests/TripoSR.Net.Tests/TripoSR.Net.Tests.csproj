@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Allows running on machines that only have a newer runtime (e.g. .NET 10). -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.*" />
+    <PackageReference Include="TorchSharp" Version="$(TorchSharpVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TripoSR.Net\TripoSR.Net.csproj" />
+    <ProjectReference Include="..\..\src\TripoSR.Service\TripoSR.Service.csproj" />
+    <ProjectReference Include="$(MusicGenCoreDir)/src/MusicGen.Core.Testing/MusicGen.Core.Testing.csproj" />
+  </ItemGroup>
+
+</Project>

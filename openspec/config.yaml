@@ -1,0 +1,42 @@
+schema: spec-driven
+
+context: |
+  Project: TripoSR.Net, a C# port (.NET 8 + TorchSharp) of TripoSR (`tsr/`: DINO ViT-B/16 image tokens, a 1D transformer over three learned triplane planes, an upsampling network, a NeRF-style MLP field and marching cubes on its density). One picture in, one binary glTF out. It generates meshes; it trains nothing.
+
+  Why it exists: the Python container `docker/model3d` of mediaOrquestator (`~/Proyectos/mediaOrquestator`) is the optional path of the 3D models; the product
+  uses .NET services (HeartMuLa, DiffRhythm2 and LAION-CLAP were migrated the same way, each in its own repository next to this one). This is the same job for TripoSR.
+
+  Reference (golden run): the Docker image `mediaorquestator/model3d:1` (python 3.12, torch 2.x, transformers < 5), engine `triposr`, upstream commit `107cefd`.
+  Weights are NOT downloaded: they are in `~/Proyectos/mediaOrquestator/models/model3d` (triposr/config.yaml, triposr/model.ckpt, triposr/dino-vitb16-config.json, rembg/u2net.onnx). `docker/model3d/server.py` and `docker/model3d/*.patch`
+  in mediaOrquestator show how the model is used and finished.
+
+  Hard rules:
+  - The product has NO Python dependency: runtime, service, library, tests and build are C# and shell only. Python is allowed as a migration tool (golden-run
+    fixtures via `tools/` inside the reference container, comparisons, one-off analysis), never as something the product, its tests or its build need once the fixtures exist.
+  - The weights file is a PyTorch pickle (`triposr/model.ckpt`, 1.6 GB). It is read without Python (the pickle reader of `~/Proyectos/lion-clap` `LionClap.Weights`: `PickleReader`, `TorchCheckpoint`: move it to `musicgen-core` when this port needs it) and converted once to safetensors in the golden run.
+  - The names of the C# modules and fields replicate the keys of the checkpoint (`image_tokenizer.model.*`, `tokenizer.embeddings`, `backbone.*`, `post_processor.*`, `decoder.*`) so that the strict loader fits with no mapping.
+  - Marching cubes follows the reference's own order of axes and winding (the container used scikit-image's `marching_cubes` with the vertices turned to `(z, y, x)` and the faces reversed): copy that, do not re-derive it.
+  - Inference only. Deterministic: the same picture, detail and port version give the same model (bit for bit where the maths allows it; otherwise within the parity thresholds).
+  - Deliverable is an HTTP service + Swagger, like `~/Proyectos/lion-clap` (`src/TripoSR.Service`, `docs/http-service.md`, `scripts/run-service.sh` + systemd unit) with the
+    contract of `docker/model3d/server.py` unchanged: `GET /health` {ready, version, busy, queued, gpu, missing, engines}; `GET /engines` {engines: {triposr: {built, missing, ready, version}}};
+    `POST /generate?engine=&detail=` (the picture as the body, up to 20 MB) -> 202 {id}; `GET /jobs/{id}` {id, state, progress, error, seconds, engine, engine_version, detail, detail_used, resolution, triangles};
+    `GET /jobs/{id}/model` (the .glb, 409 until done); `DELETE /jobs/{id}`; bearer token (`TRIPOSR_TOKEN`), `TRIPOSR_CKPT`, `TRIPOSR_PORT` (default 8790), `TRIPOSR_VERSION`, `TRIPOSR_DEVICE`.
+    One model at a time, the others queued in arrival order. The orchestrator caches a model by its `engine_version`, which here is `triposr-net@<EngineInfo.PortVersion>`: change `PortVersion` whenever a model would change.
+  - What every model leaves with, whatever the engine gave (the contract of the container): upright in glTF's axes (Y up), its origin at the middle of its base, surface and no more than 500,000 triangles
+    (a model over it is made again at the next lower detail, and `detail_used` says so), its colours kept.
+  - Every change that touches the model ends in a parity test against fixtures in `tests/fixtures/` (fp32: max_abs <= 1e-4 and cos_sim >= 0.9999 per stage; for the mesh, the same triangles
+    count within 1% and a Chamfer distance below 1e-3 of the reference's size). Without parity it is not archived.
+  - Checkpoints NEVER in the repo; tests that need them are marked `[RequiresCheckpoint]` and read `TRIPOSR_CKPT`. Fixtures are checked against a sha256 table.
+  - Tests: xUnit. Build: `dotnet build -p:TorchBackend=cpu`. Layout like `~/Proyectos/lion-clap`: `src/`, `tests/`, `tools/`.
+  - Reuse from `~/Proyectos/musicgen-core`: the safetensors loader and `StrictLoader`, the parity infrastructure (`MusicGen.Core.Testing`), seeding.
+
+  Order of the work: see `openspec/changes/port-triposr/tasks.md` (weights and golden run first, the model stage by stage with parity at each, the mesh and the GLB, then the service engine and the
+  integration with mediaOrquestator).
+
+rules:
+  proposal:
+    - Say what is ported, what is not and why, and how it is checked against the reference.
+  specs:
+    - Requirements must be testable against a fixture of the golden run or against the HTTP contract; name the stage and the threshold.
+  tasks:
+    - One task per stage that ends in a parity test; a task that needs the weights or Docker says so.

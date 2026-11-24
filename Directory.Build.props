@@ -1,0 +1,25 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Native libtorch backend: cpu | cuda-windows | cuda-linux. Chosen with -p:TorchBackend=... -->
+    <TorchBackend Condition="'$(TorchBackend)' == ''">cpu</TorchBackend>
+    <TorchSharpVersion>0.107.*</TorchSharpVersion>
+    <!-- Shared model-agnostic code. Default: sibling folder; override with -p:MusicGenCoreDir=... -->
+    <MusicGenCoreDir Condition="'$(MusicGenCoreDir)' == '' and Exists('$(MSBuildThisFileDirectory)third_party/musicgen-core')">$(MSBuildThisFileDirectory)third_party/musicgen-core</MusicGenCoreDir>
+    <MusicGenCoreDir Condition="'$(MusicGenCoreDir)' == ''">$(MSBuildThisFileDirectory)../musicgen-core</MusicGenCoreDir>
+    <!-- The core is not in the solution: without this a solution build compiles it with the default (Debug) configuration even for -c Release. -->
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+  </PropertyGroup>
+
+  <!-- Only ONE of the three. The app and the tests share it so they resolve the same native runtime. -->
+  <ItemGroup Condition="'$(TorchBackend)' == 'cpu'">
+    <PackageReference Include="TorchSharp-cpu" Version="$(TorchSharpVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TorchBackend)' == 'cuda-windows'">
+    <PackageReference Include="TorchSharp-cuda-windows" Version="$(TorchSharpVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TorchBackend)' == 'cuda-linux'">
+    <PackageReference Include="TorchSharp-cuda-linux" Version="$(TorchSharpVersion)" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,27 @@
+# systemd user unit for the TripoSR HTTP service.
+#
+#   mkdir -p ~/.config/systemd/user ~/.config/triposr
+#   cp scripts/triposr-service.service ~/.config/systemd/user/
+#   $EDITOR ~/.config/systemd/user/triposr-service.service      # set the path of the repository in ExecStart
+#   $EDITOR ~/.config/triposr/service.env                       # TRIPOSR_CKPT=..., TRIPOSR_PORT=..., TRIPOSR_DEVICE=...
+#   systemctl --user daemon-reload && systemctl --user enable --now triposr-service
+#   journalctl --user -u triposr-service -f                     # the log
+#
+# Build the service once by hand before enabling it (scripts/run-service.sh --build, Ctrl+C when it listens): the first
+# build takes minutes and systemd would time out waiting for it. A token goes in a file (TRIPOSR_TOKEN=... in service.env
+# with mode 600, or pass --token-file in ExecStart), not in this unit.
+[Unit]
+Description=TripoSR 3D model service (HTTP)
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-%h/.config/triposr/service.env
+ExecStart=%h/Proyectos/triposr/scripts/run-service.sh
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

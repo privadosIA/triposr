@@ -1,0 +1,88 @@
+name: Quality and Security
+
+on:
+  push:
+    branches: [main]
+
+env:
+  # The runner image has no libicu, and without it every `dotnet` command aborts ("Couldn't find a valid ICU package").
+  # Invariant globalization is what the error itself recommends; nothing here depends on a culture.
+  DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: "1"
+  # Without these two, the SonarQube analysis is skipped (the rest keeps running).
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+jobs:
+  analisis:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: triposr
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: triposr
+          fetch-depth: 0
+
+      # The shared code lives in its own repository, next to this one (MusicGenCoreDir points to ../musicgen-core).
+      # If the repository is private, create the MUSICGEN_CORE_TOKEN secret with read access to it.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: personales/musicgen-core
+          ref: main
+          token: ${{ secrets.MUSICGEN_CORE_TOKEN || github.token }}
+          path: musicgen-core
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 8.0.x
+
+      # --- Quality (SonarQube for C# wraps the build and the tests) ---
+      - name: SonarQube (begin)
+        if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet sonarscanner begin /k:"triposr" /d:sonar.host.url="$SONAR_HOST_URL" /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.exclusions="third_party/**,tools/**,**/bin/**,**/obj/**" \
+            /d:sonar.coverage.exclusions="tests/**"
+
+      - name: Build
+        run: dotnet build TripoSR.Net.sln -c Release -p:TorchBackend=cpu
+
+      - name: Tests with coverage
+        run: dotnet test TripoSR.Net.sln -c Release -p:TorchBackend=cpu --no-build --collect:"XPlat Code Coverage;Format=opencover"
+        continue-on-error: true
+
+      - name: SonarQube (end)
+        if: ${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+      - name: Format (dotnet format)
+        # dotnet format does not accept -p:; MSBuild reads the property from the environment variable.
+        run: TorchBackend=cpu dotnet format TripoSR.Net.sln --verify-no-changes --no-restore
+        continue-on-error: true
+
+      - name: API reference (DocFX)
+        # Builds docs/_site from the XML comments and the articles; a broken comment, cross-reference or link shows up here.
+        # It runs after the Sonar session closes, so its build is not part of the analysis.
+        run: |
+          dotnet tool restore
+          TorchBackend=cpu dotnet docfx docs/docfx.json --warningsAsErrors
+        continue-on-error: true
+
+      # --- Security ---
+      - name: Trivy
+        run: |
+          docker run --rm --volumes-from "$HOSTNAME" -w "$PWD" aquasec/trivy:latest \
+            fs . --scanners vuln,secret,misconfig --severity CRITICAL,HIGH \
+            --skip-dirs third_party --exit-code 0
+
+      - name: Semgrep
+        run: |
+          docker run --rm --volumes-from "$HOSTNAME" semgrep/semgrep sh -c \
+            'cp -a "$0/." /src && cd /src && semgrep scan --config p/csharp --config p/python --config p/owasp-top-ten --exclude third_party' "$PWD" || true

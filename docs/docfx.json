@@ -1,0 +1,27 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "../src",
+          "files": [ "TripoSR.Net/TripoSR.Net.csproj" ]
+        }
+      ],
+      "dest": "api",
+      "properties": { "TorchBackend": "cpu" }
+    }
+  ],
+  "build": {
+    "content": [
+      { "files": [ "api/**.yml", "api/index.md" ] },
+      { "files": [ "*.md", "toc.yml" ] }
+    ],
+    "output": "_site",
+    "globalMetadata": {
+      "_appTitle": "TripoSR.Net",
+      "_appFooter": "TripoSR.Net API reference, generated from the XML documentation comments.",
+      "_enableSearch": true
+    },
+    "template": [ "default", "modern" ]
+  }
+}

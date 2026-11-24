@@ -1,0 +1,5 @@
+triposr
+Copyright 2026 Jesús Suero
+
+This product is a C# port of TripoSR (https://github.com/VAST-AI-Research/TripoSR), released under the MIT licence by Tripo AI and Stability AI. The weights
+(`stabilityai/TripoSR`) are also MIT. The port is inference only and uses the reference code as its specification.
