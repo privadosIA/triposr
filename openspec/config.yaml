@@ -30,7 +30,7 @@ context: |
   - Tests: xUnit. Build: `dotnet build -p:TorchBackend=cpu`. Layout like `~/Proyectos/lion-clap`: `src/`, `tests/`, `tools/`.
   - Reuse from `~/Proyectos/musicgen-core`: the safetensors loader and `StrictLoader`, the parity infrastructure (`MusicGen.Core.Testing`), seeding.
 
-  Order of the work: see `openspec/changes/port-triposr/tasks.md` (weights and golden run first, the model stage by stage with parity at each, the mesh and the GLB, then the service engine and the
+  Order of the work: see `openspec/changes/archive/2026-11-24-port-triposr/tasks.md` (weights and golden run first, the model stage by stage with parity at each, the mesh and the GLB, then the service engine and the
   integration with mediaOrquestator).
 
 rules:
