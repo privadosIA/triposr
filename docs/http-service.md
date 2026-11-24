@@ -16,7 +16,8 @@ scripts/run-service.sh --model ~/Proyectos/mediaOrquestator/models/model3d --por
 |---|---|---|
 | `TRIPOSR_CKPT` | `/ckpt` | where the weights are: the layout of the container's `/ckpt` (`triposr/config.yaml, triposr/model.ckpt, triposr/dino-vitb16-config.json, rembg/u2net.onnx`) |
 | `TRIPOSR_TOKEN` | empty | bearer token; empty leaves the API open |
-| `TRIPOSR_PORT` | `8790` | port, on all interfaces |
+| `TRIPOSR_PORT` | `8790` | port |
+| `TRIPOSR_HOST` | `0.0.0.0` | the address to listen on: `0.0.0.0` (all interfaces, as the Python container does) or `127.0.0.1` / `localhost` for this machine only. With no token, listen on loopback |
 | `TRIPOSR_VERSION` | `1` | the version string `/health` reports (the version of a *model* is `triposr-net@<EngineInfo.PortVersion>`) |
 | `TRIPOSR_DEVICE` | `cpu` | `cpu`, `cuda` or `cuda:N` (a CUDA device needs a CUDA build) |
 

@@ -11,7 +11,8 @@ Starts triposr-service in the foreground (Ctrl+C or SIGTERM stops it). Every opt
 an option wins over the variable.
 
   --model DIR        where the weights are (the layout of the container's /ckpt)       TRIPOSR_CKPT   (default: ~/models/model3d)
-  --port N           port, on all interfaces                                           TRIPOSR_PORT   (default: 8790)
+  --port N           port                                                              TRIPOSR_PORT   (default: 8790)
+  --host ADDR        address to listen on: 0.0.0.0 (all interfaces) or 127.0.0.1      TRIPOSR_HOST   (default: 0.0.0.0)
   --device D         cpu, cuda or cuda:N                                               TRIPOSR_DEVICE (default: cpu)
   --token-file FILE  file whose first line is the bearer token                         (or TRIPOSR_TOKEN; no token leaves the API open)
   --version V        the version string /health reports                                TRIPOSR_VERSION (default: 1)
@@ -29,6 +30,7 @@ die() { echo "error: $*" >&2; exit 2; }
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 model="${TRIPOSR_CKPT:-$HOME/models/model3d}"
 port="${TRIPOSR_PORT:-8790}"
+host="${TRIPOSR_HOST:-0.0.0.0}"
 device="${TRIPOSR_DEVICE:-cpu}"
 version="${TRIPOSR_VERSION:-1}"
 token="${TRIPOSR_TOKEN:-}"
@@ -39,6 +41,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --model)       need_value "$@"; model="$2"; shift 2 ;;
     --port)        need_value "$@"; port="$2"; shift 2 ;;
+    --host)        need_value "$@"; host="$2"; shift 2 ;;
     --device)      need_value "$@"; device="$2"; shift 2 ;;
     --version)     need_value "$@"; version="$2"; shift 2 ;;
     --token-file)  need_value "$@"; [[ -r "$2" ]] || die "--token-file: cannot read '$2'"
@@ -50,6 +53,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ "$port" =~ ^[0-9]+$ ]] && (( port >= 1 && port <= 65535 )) || die "the port must be a number from 1 to 65535, got '$port'"
+[[ "$host" =~ ^[0-9A-Fa-f:.]+$ || "$host" == localhost ]] || die "the host must be an IP address or localhost, got '$host'"
 [[ "$device" =~ ^(cpu|cuda|cuda:[0-9]+)$ ]] || die "the device must be cpu, cuda or cuda:N, got '$device'"
 command -v dotnet >/dev/null || die "dotnet is not installed (the .NET 8 runtime or SDK is needed)"
 
@@ -65,7 +69,7 @@ if [[ -z "${TRIPOSR_SERVICE_DLL:-}" ]] && { (( rebuild )) || [[ ! -f "$dll" ]] |
 fi
 [[ -f "$dll" ]] || die "the service is not built: $dll does not exist"
 
-export TRIPOSR_CKPT="$model" TRIPOSR_PORT="$port" TRIPOSR_DEVICE="$device" TRIPOSR_VERSION="$version"
+export TRIPOSR_CKPT="$model" TRIPOSR_PORT="$port" TRIPOSR_HOST="$host" TRIPOSR_DEVICE="$device" TRIPOSR_VERSION="$version"
 [[ -n "$token" ]] && export TRIPOSR_TOKEN="$token"
 
 exec dotnet "$dll"

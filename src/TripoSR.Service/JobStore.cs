@@ -71,8 +71,9 @@ internal sealed class JobStore(IModelEngine engine, FifoGate gate, Func<IReadOnl
             (job.EngineVersion, job.DetailUsed, job.Size, job.Triangles) = (engine.Version, made.DetailUsed, made.Size, made.Triangles);
             job.State = "done";
         }
-        catch (RefusedException e) { job.State = "failed"; job.Error = e.Message; }
-        catch (Exception e) { job.State = "failed"; job.Error = $"{e.GetType().Name}: {e.Message}"; } // the caller needs a sentence, not a trace
+        // the error is set before the state: a client that sees "failed" must find the sentence there
+        catch (RefusedException e) { job.Error = e.Message; job.State = "failed"; }
+        catch (Exception e) { job.Error = $"{e.GetType().Name}: {e.Message}"; job.State = "failed"; } // the caller needs a sentence, not a trace
         finally { job.Picture = []; job.Finished = DateTime.UtcNow; }
     }
 

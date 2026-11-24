@@ -3,7 +3,7 @@
 #   mkdir -p ~/.config/systemd/user ~/.config/triposr
 #   cp scripts/triposr-service.service ~/.config/systemd/user/
 #   $EDITOR ~/.config/systemd/user/triposr-service.service      # set the path of the repository in ExecStart
-#   $EDITOR ~/.config/triposr/service.env                       # TRIPOSR_CKPT=..., TRIPOSR_PORT=..., TRIPOSR_DEVICE=...
+#   $EDITOR ~/.config/triposr/service.env                       # TRIPOSR_CKPT=..., TRIPOSR_PORT=..., TRIPOSR_HOST=..., TRIPOSR_DEVICE=...
 #   systemctl --user daemon-reload && systemctl --user enable --now triposr-service
 #   journalctl --user -u triposr-service -f                     # the log
 #

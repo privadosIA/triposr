@@ -11,9 +11,16 @@ internal sealed class SettingsException(string message) : Exception(message);
 /// <param name="Port">TRIPOSR_PORT: the port to listen on, on all interfaces.</param>
 /// <param name="Version">TRIPOSR_VERSION: the version string health reports (the version of a model is <see cref="TripoSR.EngineInfo.Version"/>).</param>
 /// <param name="Device">TRIPOSR_DEVICE: cpu, cuda or cuda:N.</param>
-internal sealed record ServiceSettings(string CheckpointDirectory, string Token, int Port, string Version, string Device)
+/// <param name="Host">TRIPOSR_HOST: the address to listen on: an IP address (<c>0.0.0.0</c>, all interfaces, as the Python container does, by default; <c>127.0.0.1</c> for this machine only) or <c>localhost</c>.</param>
+internal sealed record ServiceSettings(string CheckpointDirectory, string Token, int Port, string Version, string Device, string Host = "0.0.0.0")
 {
-    public const string CkptVariable = "TRIPOSR_CKPT", TokenVariable = "TRIPOSR_TOKEN", PortVariable = "TRIPOSR_PORT", VersionVariable = "TRIPOSR_VERSION", DeviceVariable = "TRIPOSR_DEVICE";
+    public const string CkptVariable = "TRIPOSR_CKPT", TokenVariable = "TRIPOSR_TOKEN", PortVariable = "TRIPOSR_PORT", VersionVariable = "TRIPOSR_VERSION", DeviceVariable = "TRIPOSR_DEVICE", HostVariable = "TRIPOSR_HOST";
+
+    /// <summary>The address as it goes in a URL (an IPv6 address in brackets).</summary>
+    public string UrlHost => Host.Contains(':') ? $"[{Host}]" : Host;
+
+    /// <summary>The URL the service listens on.</summary>
+    public string ListenUrl => $"http://{UrlHost}:{Port}";
 
     public static ServiceSettings FromEnvironment() => From(Environment.GetEnvironmentVariable);
 
@@ -29,8 +36,13 @@ internal sealed record ServiceSettings(string CheckpointDirectory, string Token,
         var device = Text(DeviceVariable, "cpu");
         if (!IsDevice(device)) throw new SettingsException($"{DeviceVariable} must be cpu, cuda or cuda:N, got '{device}'");
 
-        return new ServiceSettings(Text(CkptVariable, "/ckpt"), get(TokenVariable) ?? "", port, Text(VersionVariable, "1"), device.ToLowerInvariant());
+        var host = Text(HostVariable, "0.0.0.0");
+        if (!IsHost(host)) throw new SettingsException($"{HostVariable} must be an IP address (0.0.0.0 for all interfaces, 127.0.0.1 for this machine only) or localhost, got '{host}'");
+
+        return new ServiceSettings(Text(CkptVariable, "/ckpt"), get(TokenVariable) ?? "", port, Text(VersionVariable, "1"), device.ToLowerInvariant(), host);
     }
+
+    public static bool IsHost(string h) => h.Equals("localhost", StringComparison.OrdinalIgnoreCase) || System.Net.IPAddress.TryParse(h, out _);
 
     public static bool IsDevice(string d) =>
         d.Equals("cpu", StringComparison.OrdinalIgnoreCase) || d.Equals("cuda", StringComparison.OrdinalIgnoreCase)
