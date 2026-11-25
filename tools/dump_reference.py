@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The golden run: the Python reference (TripoSR at commit 107cefd, inside mediaorquestator/model3d:1) over some pictures, dumping what
+"""The golden run: the Python reference (TripoSR at commit 107cefd, inside veritmo/model3d:1) over some pictures, dumping what
 each stage of the C# port has to match. It is a migration tool: nothing the product, its tests or its build need once the fixtures exist.
 
 Run it through tools/golden_all.sh (it mounts what this needs into the container). It uses the container's own `server.py` for the cut-out,

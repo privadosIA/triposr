@@ -4,7 +4,7 @@ info:
   version: "1"
   description: >-
     Makes a 3D model (a binary glTF) from one picture with TripoSR. It is the same interface as the Python container `docker/model3d` of
-    mediaOrquestator (`GET /health`, `GET /engines`, `POST /generate`, `GET /jobs/{id}`, `GET /jobs/{id}/model`, `DELETE /jobs/{id}`), so the
+    Veritmo (`GET /health`, `GET /engines`, `POST /generate`, `GET /jobs/{id}`, `GET /jobs/{id}/model`, `DELETE /jobs/{id}`), so the
     orchestrator uses it as a service of its own with no change in the way it asks. One model is made at a time; the others wait in arrival order.
     Plain HTTP, for localhost or a trusted network; set a token (`TRIPOSR_TOKEN`) and put a reverse proxy in front of it to reach it from elsewhere.
 servers:

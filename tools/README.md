@@ -1,6 +1,6 @@
 # tools/
 
-The golden run: the only place Python exists in this repository, and only inside the reference container (`mediaorquestator/model3d:1`, offline, with the weights of `~/Proyectos/mediaOrquestator/models/model3d` mounted read-only).
+The golden run: the only place Python exists in this repository, and only inside the reference container (`veritmo/model3d:1`, offline, with the weights of `~/Proyectos/veritmo/models/model3d` mounted read-only).
 
 Tasks 1.x of `openspec/changes/archive/2026-11-24-port-triposr` (all of these exist; `golden_all.sh` runs the golden run on five examples that come with TripoSR: chair, hamburger, horse, teapot (RGB: rembg cuts it out) and poly_fox (RGB), fp32 on the CPU, about 90 s):
 

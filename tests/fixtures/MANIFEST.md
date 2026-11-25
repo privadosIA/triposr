@@ -1,6 +1,6 @@
 # Fixtures of the golden run
 
-Made by `tools/golden_all.sh` (the Python reference, TripoSR commit `107cefd`, inside `mediaorquestator/model3d:1`, fp32 on the CPU) with
+Made by `tools/golden_all.sh` (the Python reference, TripoSR commit `107cefd`, inside `veritmo/model3d:1`, fp32 on the CPU) with
 `tools/dump_reference.py`; the weights are not here and never are. Pictures are examples that come with TripoSR (MIT licence).
 
 What is committed: the pictures, the cut-outs and inputs (`*.png`), the per-picture summaries (`*.json`), `ckpt_keys.json` and `versions.json`.

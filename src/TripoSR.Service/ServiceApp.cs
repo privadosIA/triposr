@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace TripoSR.Service;
 
-/// <summary>The HTTP interface of the service: the calls of the Python container <c>docker/model3d</c> of mediaOrquestator, with its paths, bodies and status codes.</summary>
+/// <summary>The HTTP interface of the service: the calls of the Python container <c>docker/model3d</c> of Veritmo, with its paths, bodies and status codes.</summary>
 internal sealed class ServiceApp
 {
     /// <summary>The calls this class answers (keep in step with <see cref="Handle"/>; a test compares it with the OpenAPI description).</summary>

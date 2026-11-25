@@ -3,12 +3,12 @@ schema: spec-driven
 context: |
   Project: TripoSR.Net, a C# port (.NET 8 + TorchSharp) of TripoSR (`tsr/`: DINO ViT-B/16 image tokens, a 1D transformer over three learned triplane planes, an upsampling network, a NeRF-style MLP field and marching cubes on its density). One picture in, one binary glTF out. It generates meshes; it trains nothing.
 
-  Why it exists: the Python container `docker/model3d` of mediaOrquestator (`~/Proyectos/mediaOrquestator`) is the optional path of the 3D models; the product
+  Why it exists: the Python container `docker/model3d` of Veritmo (`~/Proyectos/veritmo`) is the optional path of the 3D models; the product
   uses .NET services (HeartMuLa, DiffRhythm2 and LAION-CLAP were migrated the same way, each in its own repository next to this one). This is the same job for TripoSR.
 
-  Reference (golden run): the Docker image `mediaorquestator/model3d:1` (python 3.12, torch 2.x, transformers < 5), engine `triposr`, upstream commit `107cefd`.
-  Weights are NOT downloaded: they are in `~/Proyectos/mediaOrquestator/models/model3d` (triposr/config.yaml, triposr/model.ckpt, triposr/dino-vitb16-config.json, rembg/u2net.onnx). `docker/model3d/server.py` and `docker/model3d/*.patch`
-  in mediaOrquestator show how the model is used and finished.
+  Reference (golden run): the Docker image `veritmo/model3d:1` (python 3.12, torch 2.x, transformers < 5), engine `triposr`, upstream commit `107cefd`.
+  Weights are NOT downloaded: they are in `~/Proyectos/veritmo/models/model3d` (triposr/config.yaml, triposr/model.ckpt, triposr/dino-vitb16-config.json, rembg/u2net.onnx). `docker/model3d/server.py` and `docker/model3d/*.patch`
+  in Veritmo show how the model is used and finished.
 
   Hard rules:
   - The product has NO Python dependency: runtime, service, library, tests and build are C# and shell only. Python is allowed as a migration tool (golden-run
@@ -31,7 +31,7 @@ context: |
   - Reuse from `~/Proyectos/musicgen-core`: the safetensors loader and `StrictLoader`, the parity infrastructure (`MusicGen.Core.Testing`), seeding.
 
   Order of the work: see `openspec/changes/archive/2026-11-24-port-triposr/tasks.md` (weights and golden run first, the model stage by stage with parity at each, the mesh and the GLB, then the service engine and the
-  integration with mediaOrquestator).
+  integration with Veritmo).
 
 rules:
   proposal:

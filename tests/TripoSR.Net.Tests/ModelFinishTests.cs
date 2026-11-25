@@ -84,7 +84,7 @@ public sealed class ModelFinishTests
         return glb.AsSpan(28 + jsonLen, binLen).ToArray();
     }
 
-    /// <summary>What <c>blender.ParseModel</c> of mediaOrquestator checks and counts: the header, the JSON chunk, no files outside, and the triangles from the accessors.</summary>
+    /// <summary>What <c>blender.ParseModel</c> of Veritmo checks and counts: the header, the JSON chunk, no files outside, and the triangles from the accessors.</summary>
     private static (int Triangles, int Bytes) Inspect(byte[] data)
     {
         Assert.True(data.Length >= 20 && data.Length <= 32 << 20, "too short or larger than 32 MiB");

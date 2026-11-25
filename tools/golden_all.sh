@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# The golden run: regenerates the fixtures under tests/fixtures/ with the Python reference inside mediaorquestator/model3d:1.
+# The golden run: regenerates the fixtures under tests/fixtures/ with the Python reference inside veritmo/model3d:1.
 # Needs Docker, the image and the weights folder; works offline. Nothing the product, its tests or its build need once the fixtures exist.
 #
 #   tools/golden_all.sh [--model DIR] [--orchestrator DIR] [--device cpu|cuda] [--names a,b,c] [--image IMG]
 #
-# --model         the weights folder (the container's /ckpt)         default ~/Proyectos/mediaOrquestator/models/model3d
-# --orchestrator  the mediaOrquestator checkout (its docker/model3d/server.py is the contract the fixtures follow)
+# --model         the weights folder (the container's /ckpt)         default ~/Proyectos/veritmo/models/model3d
+# --orchestrator  the Veritmo checkout (its docker/model3d/server.py is the contract the fixtures follow)
 # --names         the pictures (files of tests/fixtures/pictures)    default chair,hamburger,horse,teapot,poly_fox
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-model="$HOME/Proyectos/mediaOrquestator/models/model3d"
-orch="$HOME/Proyectos/mediaOrquestator"
+model="$HOME/Proyectos/veritmo/models/model3d"
+orch="$HOME/Proyectos/veritmo"
 device="cpu"
 names="chair,hamburger,horse,teapot,poly_fox"
-image="mediaorquestator/model3d:1"
+image="veritmo/model3d:1"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

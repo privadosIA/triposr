@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current state
 
-**Ported.** The whole model is in `src/TripoSR.Net` (picture, DINO, triplane, backbone, field, marching cubes, finish, `.glb`) and `src/TripoSR.Service` makes models with it (`TripoSREngine`, loaded on the first job). Every stage is tested against the fixtures of the golden run (`tests/fixtures/`, made by `tools/golden_all.sh`); the tests that need the weights read `TRIPOSR_CKPT` and are skipped without it. The OpenSpec change `port-triposr` is archived (`openspec/changes/archive/`); its specs are in `openspec/specs/`. mediaOrquestator registers the service (its `dotnet/triposr` copy, `get-services.sh`, the `ServiceSpec`). See `docs/porting-plan.md`.
+**Ported.** The whole model is in `src/TripoSR.Net` (picture, DINO, triplane, backbone, field, marching cubes, finish, `.glb`) and `src/TripoSR.Service` makes models with it (`TripoSREngine`, loaded on the first job). Every stage is tested against the fixtures of the golden run (`tests/fixtures/`, made by `tools/golden_all.sh`); the tests that need the weights read `TRIPOSR_CKPT` and are skipped without it. The OpenSpec change `port-triposr` is archived (`openspec/changes/archive/`); its specs are in `openspec/specs/`. Veritmo registers the service (its `dotnet/triposr` copy, `get-services.sh`, the `ServiceSpec`). See `docs/porting-plan.md`.
 
 ## Build and test
 
 ```bash
 dotnet build TripoSR.Net.sln -p:TorchBackend=cpu          # TorchBackend: cpu | cuda-linux | cuda-windows
 dotnet test  TripoSR.Net.sln -p:TorchBackend=cpu
-scripts/run-service.sh --model ~/Proyectos/mediaOrquestator/models/model3d --port 8790   # the HTTP service (docs/http-service.md)
+scripts/run-service.sh --model ~/Proyectos/veritmo/models/model3d --port 8790   # the HTTP service (docs/http-service.md)
 dotnet tool restore && TorchBackend=cpu dotnet docfx docs/docfx.json --warningsAsErrors            # DocFX site into docs/_site
 ```
 
@@ -19,7 +19,7 @@ Layout (like `~/Proyectos/lion-clap` and `~/Proyectos/heartmula`): `src/TripoSR.
 
 ## Goal
 
-A C# (.NET 8 + TorchSharp) inference-only port of TripoSR (https://github.com/VAST-AI-Research/TripoSR), with the same HTTP contract as the Python container `docker/model3d` of mediaOrquestator (`~/Proyectos/mediaOrquestator`), so the orchestrator can use it as an engine of the product with no Python. The golden reference is that container's image `mediaorquestator/model3d:1` (engine `triposr`, commit `107cefd`); its `docker/model3d/server.py` is the contract and the finishing of the model (upright, origin at the base, triangle limit, colours, GLB). The full rules (parity thresholds, scope, what is not ported) are in `openspec/config.yaml`.
+A C# (.NET 8 + TorchSharp) inference-only port of TripoSR (https://github.com/VAST-AI-Research/TripoSR), with the same HTTP contract as the Python container `docker/model3d` of Veritmo (`~/Proyectos/veritmo`), so the orchestrator can use it as an engine of the product with no Python. The golden reference is that container's image `veritmo/model3d:1` (engine `triposr`, commit `107cefd`); its `docker/model3d/server.py` is the contract and the finishing of the model (upright, origin at the base, triangle limit, colours, GLB). The full rules (parity thresholds, scope, what is not ported) are in `openspec/config.yaml`.
 
 ## Workflow: OpenSpec (spec-driven)
 

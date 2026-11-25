@@ -1,6 +1,6 @@
 # TripoSR.Net
 
-C# port (.NET 8 + TorchSharp) of TripoSR, inference only: one picture in, one binary glTF out. It replaces the Python container of mediaOrquestator as the product's engine for these models. **Status:** the whole model is ported and every stage matches the reference (see the porting plan); what remains is the publish script and the `ServiceSpec` in mediaOrquestator.
+C# port (.NET 8 + TorchSharp) of TripoSR, inference only: one picture in, one binary glTF out. It replaces the Python container of Veritmo as the product's engine for these models. **Status:** the whole model is ported and every stage matches the reference (see the porting plan); what remains is the publish script and the `ServiceSpec` in Veritmo.
 
 ## Articles
 

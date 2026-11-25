@@ -1,6 +1,6 @@
 # The HTTP service
 
-`triposr-service` (project `src/TripoSR.Service`) makes a 3D model from one picture with TripoSR. It is the same interface as the Python service `docker/model3d/server.py` of mediaOrquestator, so the orchestrator uses it with no change in how it asks, and any other program can use it with `curl`. Open `http://HOST:PORT/docs` for the interactive page (Swagger UI, bundled, works offline); the machine-readable description is `http://HOST:PORT/openapi.yaml`.
+`triposr-service` (project `src/TripoSR.Service`) makes a 3D model from one picture with TripoSR. It is the same interface as the Python service `docker/model3d/server.py` of Veritmo, so the orchestrator uses it with no change in how it asks, and any other program can use it with `curl`. Open `http://HOST:PORT/docs` for the interactive page (Swagger UI, bundled, works offline); the machine-readable description is `http://HOST:PORT/openapi.yaml`.
 
 It speaks plain HTTP and is meant for localhost or a trusted network. Put a reverse proxy in front of it if it must be reached from elsewhere, and set a token.
 
@@ -9,7 +9,7 @@ It speaks plain HTTP and is meant for localhost or a trusted network. Put a reve
 ## Start it
 
 ```bash
-scripts/run-service.sh --model ~/Proyectos/mediaOrquestator/models/model3d --port 8790
+scripts/run-service.sh --model ~/Proyectos/veritmo/models/model3d --port 8790
 ```
 
 | variable | default | meaning |
@@ -34,6 +34,6 @@ scripts/run-service.sh --model ~/Proyectos/mediaOrquestator/models/model3d --por
 
 `detail` is the resolution of the marching-cubes grid (it decides the triangles). A model over 500,000 triangles is made again at the next lower detail and `detail_used` says which one it was made at. Every model leaves upright (Y up) with its origin at the middle of its base and its colours.
 
-## How mediaOrquestator uses it
+## How Veritmo uses it
 
 The server runs it as a service of `bin/services/` (published with `dotnet publish`, like HeartMuLa and DiffRhythm2) or, with the Python container, the other way; both answer this contract. The `engine_version` of a model is part of what the orchestrator caches by: it never reuses a model made by another version of the port.

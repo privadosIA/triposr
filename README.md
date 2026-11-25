@@ -1,15 +1,15 @@
 # TripoSR.Net
 
-> Part of [mediaOrquestator](https://orquestator.xuxo.net/), where it makes the 3D models of the *models3d* category. **Status: ported.** Every stage of the model matches the Python reference and the five test pictures come out of the service as the container's models (see [Checked against the reference](#checked-against-the-reference)). What is left is on the mediaOrquestator side (the `ServiceSpec` and the publish entry; see [`docs/porting-plan.md`](docs/porting-plan.md)). The change is in [`openspec/changes/archive/2026-11-24-port-triposr`](openspec/changes/archive/2026-11-24-port-triposr).
+> Part of [Veritmo](https://veritmo.xuxo.net/), where it makes the 3D models of the *models3d* category. **Status: ported.** Every stage of the model matches the Python reference and the five test pictures come out of the service as the container's models (see [Checked against the reference](#checked-against-the-reference)). What is left is on the Veritmo side (the `ServiceSpec` and the publish entry; see [`docs/porting-plan.md`](docs/porting-plan.md)). The change is in [`openspec/changes/archive/2026-11-24-port-triposr`](openspec/changes/archive/2026-11-24-port-triposr).
 
-C# port (.NET 8 + [TorchSharp](https://github.com/dotnet/TorchSharp)) of [TripoSR](https://github.com/VAST-AI-Research/TripoSR), inference only: one picture in, one binary glTF (`.glb`) out. It replaces, as the product's engine, the Python container `docker/model3d` of mediaOrquestator (which stays as an optional fallback), the same way HeartMuLa, DiffRhythm2 and LAION-CLAP were migrated.
+C# port (.NET 8 + [TorchSharp](https://github.com/dotnet/TorchSharp)) of [TripoSR](https://github.com/VAST-AI-Research/TripoSR), inference only: one picture in, one binary glTF (`.glb`) out. It replaces, as the product's engine, the Python container `docker/model3d` of Veritmo (which stays as an optional fallback), the same way HeartMuLa, DiffRhythm2 and LAION-CLAP were migrated.
 
 ## What is in it
 
 | part | where | what |
 |---|---|---|
 | Library | `src/TripoSR.Net/` | `TripoSRPipeline` (picture in, finished model out), the network stage by stage (see the table below), `GlbWriter`, `EngineInfo` (id, version, files of the weights, details) |
-| HTTP service | `src/TripoSR.Service/` | `GET /health`, `GET /engines`, `POST /generate`, `GET /jobs/{id}`, `GET /jobs/{id}/model`, `DELETE /jobs/{id}`, Swagger UI at `/docs`; **the same interface as `docker/model3d/server.py`**, so mediaOrquestator uses it with no change in how it asks. Default port 8790 |
+| HTTP service | `src/TripoSR.Service/` | `GET /health`, `GET /engines`, `POST /generate`, `GET /jobs/{id}`, `GET /jobs/{id}/model`, `DELETE /jobs/{id}`, Swagger UI at `/docs`; **the same interface as `docker/model3d/server.py`**, so Veritmo uses it with no change in how it asks. Default port 8790 |
 | Tests | `tests/TripoSR.Net.Tests/` | xUnit: parity of every stage against the golden run, the service in process; the ones that need the weights are skipped, saying so, without `TRIPOSR_CKPT` |
 | Tools | `tools/` | the golden run (Python only inside the reference container, to make the fixtures once) |
 
@@ -31,7 +31,7 @@ C# port (.NET 8 + [TorchSharp](https://github.com/dotnet/TorchSharp)) of [TripoS
 
 ## Checked against the reference
 
-The golden run (`tools/golden_all.sh`, the Python reference in `mediaorquestator/model3d:1`, fp32 on the CPU) over five pictures that come with TripoSR (chair, hamburger, horse, teapot, poly_fox: three with transparency, two that the cut-out model has to cut) leaves the fixtures of `tests/fixtures/`. On the CPU:
+The golden run (`tools/golden_all.sh`, the Python reference in `veritmo/model3d:1`, fp32 on the CPU) over five pictures that come with TripoSR (chair, hamburger, horse, teapot, poly_fox: three with transparency, two that the cut-out model has to cut) leaves the fixtures of `tests/fixtures/`. On the CPU:
 
 | stage | against the reference |
 |---|---|
@@ -52,12 +52,12 @@ On the card (RTX 5060 Ti, CUDA) the float noise moves the surface by a hair: the
 ```bash
 dotnet build TripoSR.Net.sln -p:TorchBackend=cpu            # cpu | cuda-linux | cuda-windows
 dotnet test  TripoSR.Net.sln -p:TorchBackend=cpu
-scripts/run-service.sh --model ~/Proyectos/mediaOrquestator/models/model3d --port 8790
+scripts/run-service.sh --model ~/Proyectos/veritmo/models/model3d --port 8790
 ```
 
-The weights are the ones of the container (`models/model3d` of mediaOrquestator: `triposr/config.yaml, triposr/model.ckpt, triposr/dino-vitb16-config.json, rembg/u2net.onnx`), never inside the repository. The shared model-agnostic code is in the sibling repository [`musicgen-core`](../musicgen-core) (`MusicGenCoreDir`).
+The weights are the ones of the container (`models/model3d` of Veritmo: `triposr/config.yaml, triposr/model.ckpt, triposr/dino-vitb16-config.json, rembg/u2net.onnx`), never inside the repository. The shared model-agnostic code is in the sibling repository [`musicgen-core`](../musicgen-core) (`MusicGenCoreDir`).
 
-## How it fits mediaOrquestator
+## How it fits Veritmo
 
 The orchestrator makes a model with one HTTP call per picture; what it needs from a service is the contract in [`docs/http-service.md`](docs/http-service.md) (`engine_version` of a model is part of what decides it: this port says `triposr-net@<version of the port>`). The server starts and stops the service like the other .NET ones (published to `bin/services/`), or the container, as the person chooses.
 
@@ -65,24 +65,23 @@ The orchestrator makes a model with one HTTP call per picture; what it needs fro
 
 Depends on `musicgen-core` (shared code) and follows the original TripoSR. Used by `veritmo`, which makes the 3D models of the *models3d* category with it.
 
-| Repository | What it is |
-|---|---|
-| [`veritmo`](https://github.com/privadosIA/veritmo) | The server: the HTTP API and its contract, the pipelines (video, images, music), the run history and the music services it starts. |
-| [`dashboards-labs`](https://github.com/privadosIA/dashboards-labs) | The dashboards (Angular) that talk to the server through its OpenAPI contract. |
-| [`heartmula`](https://github.com/privadosIA/heartmula) | C# (.NET 8 + TorchSharp) port of [heartlib](https://github.com/HeartMuLa/heartlib): the HeartMuLa song generator, run by the server as a service. |
-| [`DiffRhythm2`](https://github.com/privadosIA/DiffRhythm2) | C# port of [DiffRhythm2](https://github.com/ASLP-lab/DiffRhythm2): a diffusion model that writes a whole song. |
-| [`lion-clap`](https://github.com/privadosIA/lion-clap) | C# port of [LAION-CLAP](https://github.com/LAION-AI/CLAP): audio and text embeddings, used to recognise songs. |
-| [`musicgen-core`](https://github.com/privadosIA/musicgen-core) | The TorchSharp building blocks shared by the five ports. |
-| [`triposr`](https://github.com/privadosIA/triposr) (this repository) | C# port of [TripoSR](https://github.com/VAST-AI-Research/TripoSR): one picture in, one 3D model (`.glb`) out; makes the models of the *models3d* category (MIT original). |
-| [`stable-fast-3d`](https://github.com/privadosIA/stable-fast-3d) | C# port of [Stable Fast 3D](https://github.com/Stability-AI/stable-fast-3d): one picture in, one textured 3D model (`.glb`) out. **Under the Stability AI Community License, not Apache-2.0** (free for research and non-commercial use, and for commercial use under US$1M of yearly revenue). |
-| [`forms-lib`](https://github.com/privadosIA/forms-lib) | `@core/dynamic-forms`, the Angular library that draws forms and tables from JSON. |
+| Repository | What it is | Licence |
+|---|---|---|
+| [`veritmo`](https://github.com/privadosIA/veritmo) | The server: the HTTP API and its contract, the pipelines (video, images, music, 3D), the run history and the services it starts. | Apache-2.0 |
+| [`dashboards-labs`](https://github.com/privadosIA/dashboards-labs) | The dashboards (Angular) that talk to the server through its OpenAPI contract. | Apache-2.0 |
+| [`forms-lib`](https://github.com/privadosIA/forms-lib) | `@core/dynamic-forms`, the Angular library that draws forms and tables from JSON. | Apache-2.0 |
+| [`heartmula`](https://github.com/privadosIA/heartmula) | C# (.NET 8 + TorchSharp) port of [heartlib](https://github.com/HeartMuLa/heartlib): the HeartMuLa song generator, run by the server as a service. | Apache-2.0 |
+| [`DiffRhythm2`](https://github.com/privadosIA/DiffRhythm2) | C# port of [DiffRhythm2](https://github.com/ASLP-lab/DiffRhythm2): a diffusion model that writes a whole song. | Apache-2.0 |
+| [`lion-clap`](https://github.com/privadosIA/lion-clap) | C# port of [LAION-CLAP](https://github.com/LAION-AI/CLAP): audio and text embeddings, used to recognise songs. | Apache-2.0 |
+| [`musicgen-core`](https://github.com/privadosIA/musicgen-core) | The TorchSharp building blocks shared by the five ports. | Apache-2.0 |
+| [`triposr`](https://github.com/privadosIA/triposr) (this repository) | C# port of [TripoSR](https://github.com/VAST-AI-Research/TripoSR): one picture in, one 3D model (`.glb`) out. | Apache-2.0 |
+| [`stable-fast-3d`](https://github.com/privadosIA/stable-fast-3d) | C# port of [Stable Fast 3D](https://github.com/Stability-AI/stable-fast-3d): one picture in, one textured 3D model (`.glb`) out. | **Stability AI Community License — not Apache-2.0**: free for research and non-commercial use and under US$1M of yearly revenue (register with Stability AI), a commercial licence above |
 
 The links are to the public copies of these repositories. The third-party tools, models and libraries they build on, with their licenses, are listed in [THIRD_PARTY.md](https://github.com/privadosIA/veritmo/blob/main/THIRD_PARTY.md).
 
-
 ## License
 
-Apache 2.0 (see [LICENSE](LICENSE)). This is a port of work by other people: the code of TripoSR and its weights are MIT (Tripo AI and Stability AI); see [NOTICE](NOTICE) for the origin and licences of the original, of the scikit-image marching cubes it follows and of the third-party packages and, for the whole set, the mediaOrquestator `dotnet/THIRD_PARTY.md`.
+Apache 2.0 (see [LICENSE](LICENSE)). This is a port of work by other people: the code of TripoSR and its weights are MIT (Tripo AI and Stability AI); see [NOTICE](NOTICE) for the origin and licences of the original, of the scikit-image marching cubes it follows and of the third-party packages and, for the whole set, the Veritmo `dotnet/THIRD_PARTY.md`.
 
 This licence covers the code of this repository. The model weights (`stabilityai/TripoSR`) are not in it: they are their publisher's and are under their own licence: see the model card.
 
